@@ -3,18 +3,19 @@ package sesame
 import (
 	"fmt"
 	"go/types"
+	"path"
+	"strings"
 )
 
 // MappingContext is an interface that contains contextual data for
 // the generation.
 type MappingContext struct {
 	absPkgPath       string
-	aliasCount       int
-	aliasBase        string
 	imports          map[string]string
 	varCount         int
 	mapperFuncFields []*MapperFuncField
 	mapperFuncCount  int
+	aliases          map[string]int
 }
 
 // MapperFuncField is a mapper function field.
@@ -43,9 +44,8 @@ func (m *MapperFuncField) Signature(mctx *MappingContext) string {
 func NewMappingContext(absPkgPath string) *MappingContext {
 	return &MappingContext{
 		absPkgPath:       absPkgPath,
-		aliasCount:       0,
-		aliasBase:        "pkg",
 		imports:          map[string]string{},
+		aliases:          map[string]int{},
 		mapperFuncFields: []*MapperFuncField{},
 		mapperFuncCount:  0,
 	}
@@ -58,13 +58,18 @@ func (c *MappingContext) AbsolutePackagePath() string {
 }
 
 // AddImport adds import path and generate new alias name for it.
-func (c *MappingContext) AddImport(path string) {
-	if path == c.AbsolutePackagePath() {
+func (c *MappingContext) AddImport(importpath string) {
+	if importpath == c.AbsolutePackagePath() {
 		return
 	}
-	if _, ok := c.imports[path]; !ok {
-		c.imports[path] = fmt.Sprintf("%s%05d", c.aliasBase, c.aliasCount)
-		c.aliasCount++
+	if _, ok := c.imports[importpath]; !ok {
+		_, last := path.Split(importpath)
+		alias := strings.ReplaceAll(last, "-", "_")
+		if i := c.aliases[alias]; i > 0 {
+			alias = fmt.Sprintf("%s%d", alias, i+1)
+		}
+		c.imports[importpath] = alias
+		c.aliases[alias]++
 	}
 }
 
