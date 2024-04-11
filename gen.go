@@ -465,11 +465,17 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 	if ok {
 		f, ok := GetField(st, name, ignoreCase)
 		if ok && f.Exported() {
-			return &objectPropertyMappingValue{
+			ret := &objectPropertyMappingValue{
 				base:              baseName,
 				exportedFieldName: f.Name(),
 				exportedFieldType: f.Type(),
-			}, true
+			}
+			// proto generated Getter
+			getter, ok := GetMethod(named, "Get"+name, ignoreCase)
+			if ok && getter.Exported() {
+				ret.getter = getter
+			}
+			return ret, true
 		}
 	}
 
@@ -481,6 +487,7 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 	if ok && setter.Exported() {
 		ret.setter = setter
 	}
+
 	getter, ok := GetMethod(named, name, ignoreCase)
 	if ok && getter.Exported() {
 		ret.getter = getter
@@ -505,11 +512,11 @@ func (v *objectPropertyMappingValue) DisplayName() string {
 }
 
 func (v *objectPropertyMappingValue) GetGetterSource() string {
-	if len(v.exportedFieldName) != 0 {
-		return v.base + "." + v.exportedFieldName
-	}
 	if v.getter != nil {
 		return v.base + "." + v.getter.Name() + "()"
+	}
+	if len(v.exportedFieldName) != 0 {
+		return v.base + "." + v.exportedFieldName
 	}
 	return ""
 }
@@ -533,11 +540,11 @@ func (v *objectPropertyMappingValue) CanSet() bool {
 }
 
 func (v *objectPropertyMappingValue) Type() types.Type {
-	if len(v.exportedFieldName) != 0 {
-		return v.exportedFieldType
-	}
 	if v.getter != nil {
 		return v.getter.Type().(*types.Signature).Results().At(0).Type()
+	}
+	if len(v.exportedFieldName) != 0 {
+		return v.exportedFieldType
 	}
 	if v.setter != nil {
 		return v.setter.Type().(*types.Signature).Params().At(0).Type()
@@ -994,9 +1001,11 @@ func genMapFuncBody(printer Printer,
 							nestName := strings.Join(parts[:i], ".")
 							nestField, ok := GetField(destStruct, nestName, mapping.IgnoreCase)
 							if ok {
-								p("if %s.%s == nil {", destNameBase, nestName)
-								p("  %s.%s = %s{}", destNameBase, nestName, strings.Replace(GetSource(nestField.Type(), mctx), "*", "&", 1))
-								p("}")
+								if _, isPtr := nestField.Type().(*types.Pointer); isPtr {
+									p("if %s.%s == nil {", destNameBase, nestName)
+									p("  %s.%s = %s{}", destNameBase, nestName, strings.Replace(GetSource(nestField.Type(), mctx), "*", "&", 1))
+									p("}")
+								}
 							}
 						}
 					}
@@ -1216,6 +1225,7 @@ func genAssignStmt(printer Printer,
 	}
 
 	if sourceTypeName == destTypeName {
+		LogFunc(LogLevelInfo, sourceSig)
 		switch {
 		case sourceIsPointer && destIsPointer:
 			p(destValue.GetSetterSource(sourceSig))
