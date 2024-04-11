@@ -1225,7 +1225,6 @@ func genAssignStmt(printer Printer,
 	}
 
 	if sourceTypeName == destTypeName {
-		LogFunc(LogLevelInfo, sourceSig)
 		switch {
 		case sourceIsPointer && destIsPointer:
 			p(destValue.GetSetterSource(sourceSig))
