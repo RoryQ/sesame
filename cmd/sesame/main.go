@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yuin/sesame"
+	"github.com/roryq/sesame"
 )
 
 func main() {

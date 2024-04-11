@@ -1,4 +1,4 @@
-module github.com/yuin/sesame
+module github.com/roryq/sesame
 
 go 1.20
 
