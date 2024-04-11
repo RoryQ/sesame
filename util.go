@@ -1,11 +1,13 @@
 package sesame
 
 import (
+	"cmp"
 	"fmt"
 	"go/types"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -272,4 +274,16 @@ func toAbsoluteImportPath(path string) (string, error) {
 		buf = append([]string{filepath.Base(cur)}, buf...)
 	}
 	return "", fmt.Errorf("Can not resolve qualified package path: %s", path)
+}
+
+// SortedKeys returns the keys of the map m.
+func SortedKeys[K cmp.Ordered, V any](in map[K]V) []K {
+	result := make([]K, 0, len(in))
+
+	for k := range in {
+		result = append(result, k)
+	}
+
+	slices.Sort(result)
+	return result
 }
