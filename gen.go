@@ -387,6 +387,8 @@ type MappingValue interface {
 	// GetGetterSource returns a source code of the getter.
 	GetGetterSource() string
 
+	GetGetterMethod() string
+
 	// CanGet returns true if this value is readable.
 	CanGet() bool
 
@@ -427,6 +429,10 @@ func (v *localMappingValue) GetGetterSource() string {
 	return v.name
 }
 
+func (v *localMappingValue) GetGetterMethod() string {
+	return v.name
+}
+
 func (v *localMappingValue) CanGet() bool {
 	return true
 }
@@ -450,6 +456,7 @@ type objectPropertyMappingValue struct {
 	exportedFieldName string
 	exportedFieldType types.Type
 	getter            *types.Func
+	getterMethod      *types.Func
 	setter            *types.Func
 }
 
@@ -471,9 +478,9 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 				exportedFieldType: f.Type(),
 			}
 			// proto generated Getter
-			getter, ok := GetMethod(named, "Get"+name, ignoreCase)
-			if ok && getter.Exported() {
-				ret.getter = getter
+			getterMethod, ok := GetMethod(named, "Get"+name, ignoreCase)
+			if ok && getterMethod.Exported() {
+				ret.getterMethod = getterMethod
 			}
 			return ret, true
 		}
@@ -517,6 +524,13 @@ func (v *objectPropertyMappingValue) GetGetterSource() string {
 	}
 	if len(v.exportedFieldName) != 0 {
 		return v.base + "." + v.exportedFieldName
+	}
+	return ""
+}
+
+func (v *objectPropertyMappingValue) GetGetterMethod() string {
+	if v.getterMethod != nil {
+		return v.base + "." + v.getterMethod.Name() + "()"
 	}
 	return ""
 }
@@ -1195,6 +1209,8 @@ func genAssignStmt(printer Printer,
 	// Try to execute custom mapper
 	argName := ""
 	switch {
+	case sourceValue.GetGetterMethod() != "":
+		argName = sourceValue.GetGetterMethod()
 	case sourceIsPointerPreferable && sourceIsPointer:
 		argName = sourceSig
 	case sourceIsPointerPreferable && !sourceIsPointer:
@@ -1227,6 +1243,8 @@ func genAssignStmt(printer Printer,
 
 	if sourceTypeName == destTypeName {
 		switch {
+		case sourceValue.GetGetterMethod() != "":
+			p(destValue.GetSetterSource(argName))
 		case sourceIsPointer && destIsPointer:
 			p(destValue.GetSetterSource(sourceSig))
 		case sourceIsPointer && !destIsPointer:
