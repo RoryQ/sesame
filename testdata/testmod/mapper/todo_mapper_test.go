@@ -39,6 +39,8 @@ func TestTodoMapper(t *testing.T) {
 		t.Fatal(err)
 	}
 	todoMapper, _ := obj.(TodoMapper)
+	line1 := "300 Street Street"
+	line1Expect := line1
 
 	source := &model.TodoModel{
 		Id:     1,
@@ -49,6 +51,7 @@ func TestTodoMapper(t *testing.T) {
 			Date: &model.Date1{
 				Year: "2021",
 			},
+			Line1: &line1,
 		},
 		Title: "Write unit tests",
 		Type:  1,
@@ -80,6 +83,7 @@ func TestTodoMapper(t *testing.T) {
 				Date: domain.Date1{
 					Year: 2021,
 				},
+				Line1: &line1Expect,
 			},
 		},
 		Title: "Write unit tests",
