@@ -524,30 +524,36 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 	if len(parts) > 1 {
 		baseName = base + "." + strings.Join(parts[:len(parts)-1], ".")
 	}
+
+	ret := &objectPropertyMappingValue{
+		base: base,
+	}
+
 	st, ok := GetStructType(named)
 	if ok {
 		f, ok := GetField(st, name, ignoreCase)
 		if ok && f.Exported() {
-			return &objectPropertyMappingValue{
-				base:              baseName,
-				exportedFieldName: f.Name(),
-				exportedFieldType: f.Type(),
-			}, true
+			ret.base = baseName
+			ret.exportedFieldName = f.Name()
+			ret.exportedFieldType = f.Type()
 		}
-	}
-
-	ret := &objectPropertyMappingValue{
-		base: base,
 	}
 
 	setter, ok := GetMethod(named, "Set"+name, ignoreCase)
 	if ok && setter.Exported() && GetParamsCount(setter) == 1 {
 		ret.setter = setter
 	}
-	getter, ok := GetMethod(named, name, ignoreCase)
-	if ok && getter.Exported() && GetParamsCount(getter) == 0 {
+
+	if getter, ok := GetMethod(named, name, ignoreCase); ok && getter.Exported() && GetParamsCount(getter) == 0 {
+		ret.getter = getter
+	} else if getter, ok := GetMethod(named, "Get"+name, ignoreCase); ok && getter.Exported() && GetParamsCount(getter) == 0 {
 		ret.getter = getter
 	}
+
+	if ret.getter != nil {
+		ret.exportedFieldType = ret.getter.Signature().Results().At(0).Type()
+	}
+
 	if ret.CanGet() || ret.CanSet() {
 		return ret, true
 	}
@@ -555,11 +561,11 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 }
 
 func (v *objectPropertyMappingValue) DisplayName() string {
-	if len(v.exportedFieldName) != 0 {
-		return v.base + "." + v.exportedFieldName
-	}
 	if v.getter != nil {
 		return v.base + "." + v.getter.Name() + "()"
+	}
+	if len(v.exportedFieldName) != 0 {
+		return v.base + "." + v.exportedFieldName
 	}
 	if v.setter != nil {
 		return fmt.Sprintf("%s.%s(%s)", v.base, v.setter.Name(), "v")
@@ -568,24 +574,23 @@ func (v *objectPropertyMappingValue) DisplayName() string {
 }
 
 func (v *objectPropertyMappingValue) GetGetterSource() string {
-	if len(v.exportedFieldName) != 0 {
-		return v.base + "." + v.exportedFieldName
-	}
 	if v.getter != nil {
 		return v.base + "." + v.getter.Name() + "()"
+	}
+	if len(v.exportedFieldName) != 0 {
+		return v.base + "." + v.exportedFieldName
 	}
 	return ""
 }
 
 func (v *objectPropertyMappingValue) CanAddr() bool {
-	if len(v.exportedFieldName) != 0 {
-		return true
-	}
 	if v.getter != nil {
 		typ := v.getter.Type().(*types.Signature).Results().At(0).Type()
 		if _, ok := typ.(*types.Pointer); ok {
 			return true
 		}
+	} else if len(v.exportedFieldName) != 0 {
+		return true
 	}
 	return false
 }
@@ -1340,8 +1345,9 @@ func genAssignStmt(printer Printer,
 			if sourceValue.CanAddr() {
 				argName = "&(" + sourceSig + ")"
 			} else {
-				p("s := %s", sourceSig)
-				argName = "&s"
+				sNum := mctx.NextVarCount()
+				p("s%d := %s", sNum, sourceSig)
+				argName = fmt.Sprintf("&s%d", sNum)
 			}
 		}
 		p("if m.%s != nil && !done%d {", cf.FieldName, done)
