@@ -5,6 +5,7 @@ type AddressModel struct {
 	Street    []int
 	IntValues []int
 	Date      *Date1
+	Line1     *string
 }
 
 type Date1 struct {

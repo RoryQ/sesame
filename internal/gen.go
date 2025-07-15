@@ -458,8 +458,11 @@ type MappingValue interface {
 	// CanSet returns true if this value is writable.
 	CanSet() bool
 
-	// Type is a type of the value
-	Type() types.Type
+	// SourceType is a type of the value as source.
+	SourceType() types.Type
+
+	// DestType is a type of the value as dest.
+	DestType() types.Type
 }
 
 var _ MappingValue = (*localMappingValue)(nil)
@@ -502,7 +505,11 @@ func (v *localMappingValue) CanSet() bool {
 	return true
 }
 
-func (v *localMappingValue) Type() types.Type {
+func (v *localMappingValue) SourceType() types.Type {
+	return v.typ
+}
+
+func (v *localMappingValue) DestType() types.Type {
 	return v.typ
 }
 
@@ -549,11 +556,6 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 	} else if getter, ok := GetMethod(named, "Get"+name, ignoreCase); ok && getter.Exported() && GetParamsCount(getter) == 0 {
 		ret.getter = getter
 	}
-
-	if ret.getter != nil {
-		ret.exportedFieldType = ret.getter.Signature().Results().At(0).Type()
-	}
-
 	if ret.CanGet() || ret.CanSet() {
 		return ret, true
 	}
@@ -613,15 +615,22 @@ func (v *objectPropertyMappingValue) CanSet() bool {
 	return len(v.exportedFieldName) > 0 || v.setter != nil
 }
 
-func (v *objectPropertyMappingValue) Type() types.Type {
-	if len(v.exportedFieldName) != 0 {
-		return v.exportedFieldType
-	}
+func (v *objectPropertyMappingValue) SourceType() types.Type {
 	if v.getter != nil {
 		return v.getter.Type().(*types.Signature).Results().At(0).Type()
 	}
+	if len(v.exportedFieldName) != 0 {
+		return v.exportedFieldType
+	}
+	return nil
+}
+
+func (v *objectPropertyMappingValue) DestType() types.Type {
 	if v.setter != nil {
 		return v.setter.Type().(*types.Signature).Params().At(0).Type()
+	}
+	if len(v.exportedFieldName) != 0 {
+		return v.exportedFieldType
 	}
 	return nil
 }
@@ -1089,7 +1098,7 @@ func genMapFuncBody(printer Printer,
 				var found bool
 				if destName == "*" { // embedded
 					found = true
-					destValue = NewLocalMappingValue(destNameBase, sourceValue.Type())
+					destValue = NewLocalMappingValue(destNameBase, sourceValue.SourceType())
 				} else {
 					destValue, found = NewObjectPropertyMappingValue(destNameBase, destNamed, destName, mapping.IgnoreCase)
 					found = found && destValue.CanSet()
@@ -1167,8 +1176,8 @@ func genFieldMapStmts(printer Printer,
 	fm *FieldMapping,
 	mctx *MappingContext) error {
 	p := printer.P
-	sourceType := sourceValue.Type()
-	destType := destValue.Type()
+	sourceType := sourceValue.SourceType()
+	destType := destValue.DestType()
 
 	switch typ := sourceType.(type) {
 	case *types.Array:
@@ -1186,7 +1195,7 @@ func genFieldMapStmts(printer Printer,
 		// TODO: support a conversion slice and array?
 
 		a := mctx.NextVarCount()
-		p("var arr%d %s", a, GetSource(destValue.Type(), mctx))
+		p("var arr%d %s", a, GetSource(destValue.DestType(), mctx))
 		i := mctx.NextVarCount()
 		p("for i%d, elm := range %s {", i, sourceValue.GetGetterSource())
 		n := mctx.NextVarCount()
@@ -1206,7 +1215,7 @@ func genFieldMapStmts(printer Printer,
 			mctx)
 		p("}")
 		genAssignStmt(printer,
-			NewLocalMappingValue(fmt.Sprintf("arr%d", a), destValue.Type()),
+			NewLocalMappingValue(fmt.Sprintf("arr%d", a), destValue.DestType()),
 			destValue, "", mctx)
 	case *types.Slice:
 		if fm.Uses != "" {
@@ -1223,7 +1232,7 @@ func genFieldMapStmts(printer Printer,
 		// TODO: support a conversion slice and array?
 
 		s := mctx.NextVarCount()
-		p("var sl%d %s", s, GetSource(destValue.Type(), mctx))
+		p("var sl%d %s", s, GetSource(destValue.DestType(), mctx))
 		p("if %s == nil {", sourceValue.GetGetterSource())
 		switch mapping.NilSlice {
 		case NilCollectionAsNil:
@@ -1247,7 +1256,7 @@ func genFieldMapStmts(printer Printer,
 		p("sl%d = append(sl%d, tmp%d)", s, s, n)
 		p("}")
 		genAssignStmt(printer,
-			NewLocalMappingValue(fmt.Sprintf("sl%d", s), destValue.Type()),
+			NewLocalMappingValue(fmt.Sprintf("sl%d", s), destValue.DestType()),
 			destValue, "", mctx)
 		p("}")
 	case *types.Map:
@@ -1289,7 +1298,7 @@ func genFieldMapStmts(printer Printer,
 			NewLocalMappingValue(fmt.Sprintf("map%d[key]", m), dtype.Elem()), "", mctx)
 		p("}")
 		genAssignStmt(printer,
-			NewLocalMappingValue(fmt.Sprintf("map%d", m), destValue.Type()),
+			NewLocalMappingValue(fmt.Sprintf("map%d", m), destValue.DestType()),
 			destValue, "", mctx)
 		p("}")
 	case *types.Chan:
@@ -1303,9 +1312,9 @@ func genFieldMapStmts(printer Printer,
 func genAssignStmt(printer Printer,
 	sourceValue MappingValue, destValue MappingValue, fid FuncID, mctx *MappingContext) {
 	p := printer.P
-	sourceType := sourceValue.Type()
+	sourceType := sourceValue.SourceType()
 	sourceSig := sourceValue.GetGetterSource()
-	destType := destValue.Type()
+	destType := destValue.DestType()
 
 	sourceTypeName := GetQualifiedTypeName(sourceType)
 	sourceIsNillable := IsNillableType(sourceType)
@@ -1459,7 +1468,7 @@ func genAssignStmt(printer Printer,
 				p(destValue.GetSetterSource("&(" + sourceSig + ")"))
 			} else {
 				a := mctx.NextVarCount()
-				p("s%d := ", a, sourceSig)
+				p("s%d := %s", a, sourceSig)
 				p(destValue.GetSetterSource(fmt.Sprintf("&s%d", a)))
 			}
 		case !sourceIsNillable && !destIsNillable:
