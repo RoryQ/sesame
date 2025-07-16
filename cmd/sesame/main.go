@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/earthboundkid/versioninfo/v2"
+
 	sesameinternal "github.com/yuin/sesame/internal"
 )
 
@@ -20,6 +22,7 @@ func main() {
 	generateConfig := generateCmd.String("c", "sesame.yml", "config file path")
 	generateHelp := generateCmd.Bool("h", false, "show this help")
 	generateQuiet := generateCmd.Bool("q", false, "suppress messages")
+	versioninfo.AddFlag(generateCmd)
 
 	cmdName := "generate"
 	args := []string{}
