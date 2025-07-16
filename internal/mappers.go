@@ -10,7 +10,7 @@ const mapperGetterSrc = `interface {
 const mappersSrc = `
 import (
 	{{IMPORTS}}
-	"github.com/yuin/sesame"
+	"github.com/roryq/sesame"
 )
 
 // NewMappers return a new [sesame.Mappers] .
