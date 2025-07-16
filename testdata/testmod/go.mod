@@ -1,6 +1,6 @@
 module example.com/testmod
 
-go 1.22
+go 1.23.0
 
 require github.com/google/go-cmp v0.5.9
 
