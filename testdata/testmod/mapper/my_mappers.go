@@ -8,7 +8,7 @@ import (
 
 	"example.com/testmod/domain"
 	"example.com/testmod/model"
-	"github.com/yuin/sesame"
+	"github.com/roryq/sesame"
 )
 
 type TimeStringConverter struct {

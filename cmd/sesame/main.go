@@ -10,7 +10,7 @@ import (
 
 	"github.com/earthboundkid/versioninfo/v2"
 
-	sesameinternal "github.com/yuin/sesame/internal"
+	sesameinternal "github.com/roryq/sesame/internal"
 )
 
 func main() {

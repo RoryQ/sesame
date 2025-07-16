@@ -9,7 +9,7 @@ import (
 	. "example.com/testmod/mapper"
 	"example.com/testmod/model"
 	"github.com/google/go-cmp/cmp"
-	"github.com/yuin/sesame"
+	"github.com/roryq/sesame"
 )
 
 func TestUserNammer(t *testing.T) {

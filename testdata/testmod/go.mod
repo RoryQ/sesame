@@ -4,6 +4,6 @@ go 1.23.0
 
 require github.com/google/go-cmp v0.5.9
 
-require github.com/yuin/sesame v0.0.0
+require github.com/roryq/sesame v0.0.0
 
-replace github.com/yuin/sesame => ../../
+replace github.com/roryq/sesame => ../../
