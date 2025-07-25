@@ -28,6 +28,12 @@ mappings:
       - a: CreatedAt
         b: CreatedAt
         uses: FixedTimeStringConverter
+      - a: Priorities
+        b: Priorities
+        uses: PrioritiesStringConverter
+      - a: Priorities
+        b: PrioritiesPtr
+        uses: PrioritiesStringConverter
     ignores:
       - a: ValidateOnly
       - b: User
@@ -47,6 +53,12 @@ mappings:
       - a: CreatedAt
         b: CreatedAt
         uses: FixedTimeStringConverter
+      - a: Priorities
+        b: Priorities
+        uses: PrioritiesStringConverter
+      - a: Priorities
+        b: PrioritiesPtr
+        uses: PrioritiesStringConverter
     ignores:
       - a: Id
       - a: UserID
