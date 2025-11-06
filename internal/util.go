@@ -94,6 +94,8 @@ func GetSource(typ types.Type, mctx *MappingContext) string {
 		return "[]" + GetSource(t.Elem(), mctx)
 	case *types.Array:
 		return fmt.Sprintf("[%d]%s", t.Len(), GetSource(t.Elem(), mctx))
+	case *types.Alias:
+		return GetSource(t.Rhs(), mctx)
 	case *types.Named:
 		pkg := t.Obj().Pkg()
 		if pkg == nil {
