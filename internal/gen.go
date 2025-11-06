@@ -1156,6 +1156,12 @@ func genMapFuncBody(printer Printer,
 					continue
 				}
 
+				// Check if the intermediate field is a pointer type and add nil check
+				_, isPointer := f.Type().(*types.Pointer)
+				if isPointer {
+					p("if %s.%s != nil {", sourceNameBase, parts[0])
+				}
+
 				nestMapping := NewObjectMapping()
 				nestMapping.ExplicitOnly = true
 				nestMapping.AddField(typ, parts[1], destFieldName)
@@ -1164,6 +1170,10 @@ func genMapFuncBody(printer Printer,
 					dest, destNameBase, nestMapping, typ, mctx)
 				if err != nil {
 					return err
+				}
+
+				if isPointer {
+					p("}")
 				}
 			}
 		}

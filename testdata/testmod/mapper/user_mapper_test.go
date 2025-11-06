@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"example.com/testmod/domain"
 	"example.com/testmod/mapper"
 	. "example.com/testmod/mapper"
 	"example.com/testmod/model"
-	"github.com/google/go-cmp/cmp"
 	"github.com/roryq/sesame"
 )
 
@@ -51,5 +52,22 @@ func TestUserNammer(t *testing.T) {
 	}
 	if diff := cmp.Diff(expected, &entity); len(diff) != 0 {
 		t.Errorf("Compare value is mismatch(-:expected, +:actual) :%s\n", diff)
+	}
+}
+
+func TestIntermediateNil(t *testing.T) {
+	mappers := NewMappers()
+
+	m, err := sesame.Get[NilAddressMapper](mappers, "NilAddressMapper")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	source := &model.UserModel{}
+
+	var entity domain.User
+	err = m.UserModelToUser(context.Background(), source, &entity)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

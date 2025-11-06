@@ -101,5 +101,18 @@ mappings:
     nil-map: nil
     nil-slice: nil
     ignore-case: true
+  - name: NilAddressMapper
+    package: mapper
+    destination: ./mapper/nil_address_mapper_gen.go
+    bidirectional: false
+    a:
+      package: ./model
+      name: UserModel
+    b:
+      package: ./domain
+      name: User
+    fields:
+      - a: Address.Pref
+        b: Name
 _includes:
   - ./*/**/*_sesame.yml
