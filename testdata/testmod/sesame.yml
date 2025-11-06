@@ -34,9 +34,12 @@ mappings:
       - a: Priorities
         b: PrioritiesPtr
         uses: PrioritiesStringConverter
+      - a: AliasedUserName
+        b: AliasedUser.Name
     ignores:
       - a: ValidateOnly
       - b: User
+      - b: AliasedUser
 
   - name: TodoEmptyMapper
     package: mapper
@@ -59,6 +62,8 @@ mappings:
       - a: Priorities
         b: PrioritiesPtr
         uses: PrioritiesStringConverter
+      - a: AliasedUserName
+        b: AliasedUser.Name
     ignores:
       - a: Id
       - a: UserID
@@ -68,6 +73,7 @@ mappings:
       - b: ID
       - b: User
       - b: Finished
+      - b: AliasedUser
   - name: AddressMapper
     package: mapper
     destination: ./mapper/address_mapper_gen.go

@@ -15,6 +15,7 @@ type TodoModel struct {
 	ValidateOnly bool
 	Inf          string
 	privateValue int
+	AliasedUserName string
 }
 
 func (m *TodoModel) SetPrivateValue(v int) {

@@ -31,6 +31,7 @@ type Todo struct {
 	CreatedAt     time.Time
 	Inf           Inf
 	privateValue  int
+	AliasedUser UserAlias
 }
 
 func (e *Todo) SetPrivateValue(v int) {
@@ -52,3 +53,5 @@ type InfV struct {
 func (i *InfV) Value() string {
 	return i.Valuef
 }
+
+type UserAlias = User

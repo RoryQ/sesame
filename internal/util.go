@@ -59,8 +59,10 @@ func GetStructType(typ types.Type) (*types.Struct, bool) {
 	switch t := typ.(type) {
 	case *types.Pointer:
 		return GetStructType(t.Elem())
+	case *types.Alias:
+		return GetStructType(t.Rhs())
 	case *types.Named:
-		return GetStructType(t.Obj().Type().Underlying())
+		return GetStructType(t.Underlying())
 	case *types.Struct:
 		return t, true
 	}
@@ -73,6 +75,8 @@ func GetNamedType(typ types.Type) (*types.Named, bool) {
 	switch t := typ.(type) {
 	case *types.Pointer:
 		return GetNamedType(t.Elem())
+	case *types.Alias:
+		return GetNamedType(t.Rhs())
 	case *types.Named:
 		return t, true
 	}

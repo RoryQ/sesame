@@ -20,11 +20,7 @@ func ParseStruct(path string, name string, mctx *MappingContext) (types.Object, 
 	if obj == nil {
 		return nil, fmt.Errorf("Struct %s not found in %s", name, path)
 	}
-	_, ok := obj.Type().(*types.Named)
-	if !ok {
-		return nil, fmt.Errorf("%s in %s is not a struct", name, path)
-	}
-	_, ok = obj.Type().Underlying().(*types.Struct)
+	_, ok := GetStructType(obj.Type())
 	if !ok {
 		return nil, fmt.Errorf("%s in %s is not a struct", name, path)
 	}
