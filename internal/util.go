@@ -314,6 +314,8 @@ func getQualifiedTypeName(typ types.Type) string {
 		return "[]" + getQualifiedTypeName(t.Elem())
 	case *types.Array:
 		return fmt.Sprintf("[%d]%s", t.Len(), getQualifiedTypeName(t.Elem()))
+	case *types.Alias:
+		return getQualifiedTypeName(t.Rhs())
 	case *types.Named:
 		pkg := t.Obj().Pkg()
 		if pkg == nil {
