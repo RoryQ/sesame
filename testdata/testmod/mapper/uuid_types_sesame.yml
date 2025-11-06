@@ -1,0 +1,36 @@
+mappings:
+  # Test mapping for named array types (uuid.UUID is defined as [16]byte)
+  # This tests the fix in util.go where we check for named types before Kind()
+  - name: EntityMapper
+    package: mapper
+    destination: ./entity_mapper_gen.go
+    bidirectional: true
+    a:
+      package: ../model
+      name: EntityModel
+    b:
+      package: ../domain
+      name: Entity
+    fields:
+      - a: ID
+        b: ID
+      - a: Name
+        b: Name
+
+  # Test mapping for type aliases (types.UUID = uuid.UUID)
+  # This tests the fix in internal/util.go for getQualifiedTypeName
+  - name: AliasedEntityMapper
+    package: mapper
+    destination: ./aliased_entity_mapper_gen.go
+    bidirectional: true
+    a:
+      package: ../model
+      name: AliasedEntityModel
+    b:
+      package: ../domain
+      name: AliasedEntity
+    fields:
+      - a: ID
+        b: ID
+      - a: Name
+        b: Name

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"example.com/testmod/domain"
 	"example.com/testmod/model"
 	"github.com/roryq/sesame"
@@ -185,4 +187,32 @@ func (m *PrioritiesStringConverter) SliceToString(ctx context.Context, source []
 
 func AddPrioritiesConverter(mappers sesame.Mappers) {
 	mappers.Add("PrioritiesStringConverter", &PrioritiesStringConverter{})
+}
+
+// UUIDStringConverter tests handling of:
+// 1. Named types with underlying array types (uuid.UUID is [16]byte)
+// 2. Type aliases (types.UUID = uuid.UUID)
+type UUIDStringConverter struct {
+}
+
+func (m *UUIDStringConverter) StringToUUID(ctx context.Context, source *string) (*uuid.UUID, error) {
+	if source == nil || *source == "" {
+		return nil, nil
+	}
+	id, err := uuid.Parse(*source)
+	if err != nil {
+		return nil, err
+	}
+	return &id, nil
+}
+
+func (m *UUIDStringConverter) UUIDToString(ctx context.Context, source *uuid.UUID) (string, bool, error) {
+	if source == nil {
+		return "", true, nil
+	}
+	return source.String(), false, nil
+}
+
+func AddUUIDConverter(mappers sesame.Mappers) {
+	mappers.Add("UUIDStringConverter", &UUIDStringConverter{})
 }
