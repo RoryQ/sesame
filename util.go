@@ -26,6 +26,13 @@ func toTypeNameAux(typ reflect.Type) string {
 		return "*" + toTypeNameAux(typ.Elem())
 	}
 
+	// Check for named types first, before checking kind
+	// This handles cases like uuid.UUID which is a named array type
+	name := typ.Name()
+	if len(name) != 0 && len(typ.PkgPath()) != 0 {
+		return typ.PkgPath() + "#" + name
+	}
+
 	if typ.Kind() == reflect.Slice {
 		return "[]" + toTypeNameAux(typ.Elem())
 	}
@@ -38,10 +45,6 @@ func toTypeNameAux(typ reflect.Type) string {
 		return fmt.Sprintf("map[%s]%s", toTypeNameAux(typ.Key()), toTypeNameAux(typ.Elem()))
 	}
 
-	name := typ.Name()
-	if len(typ.PkgPath()) != 0 {
-		name = typ.PkgPath() + "#" + name
-	}
 	if len(name) == 0 {
 		name = typ.String()
 	}
