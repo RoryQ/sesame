@@ -6,5 +6,6 @@ type User struct {
 	ID        string
 	Name      string
 	UpdatedAt time.Time
+	DeletedAt *time.Time
 	Address   *Address
 }
