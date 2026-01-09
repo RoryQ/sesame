@@ -519,7 +519,6 @@ type objectPropertyMappingValue struct {
 // the given object.
 func NewObjectPropertyMappingValue(base string, named *types.Named, name string, ignoreCase bool) (MappingValue, bool) {
 	baseName := base
-	_ = baseName
 	parts := strings.SplitN(name, ".", -1)
 	if len(parts) > 1 {
 		baseName = base + "." + strings.Join(parts[:len(parts)-1], ".")
