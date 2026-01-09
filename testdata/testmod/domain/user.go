@@ -9,3 +9,7 @@ type User struct {
 	DeletedAt *time.Time
 	Address   *Address
 }
+
+func (u User) GetName() string {
+	return u.Name
+}

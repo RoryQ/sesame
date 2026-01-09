@@ -7,3 +7,7 @@ type UserModel struct {
 	DeletedAt *string
 	Address   *AddressModel
 }
+
+func (um UserModel) GetName() string {
+	return um.Name
+}
