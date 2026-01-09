@@ -523,30 +523,32 @@ func NewObjectPropertyMappingValue(base string, named *types.Named, name string,
 	if len(parts) > 1 {
 		baseName = base + "." + strings.Join(parts[:len(parts)-1], ".")
 	}
+	ret := &objectPropertyMappingValue{
+		base: base,
+	}
+
+	if getter, ok := GetMethod(named, name, ignoreCase); ok && getter.Exported() && GetParamsCount(getter) == 0 {
+		ret.getter = getter
+	} else if getter, ok := GetMethod(named, "Get"+name, ignoreCase); ok && getter.Exported() && GetParamsCount(getter) == 0 {
+		ret.getter = getter
+	}
+
 	st, ok := GetStructType(named)
 	if ok {
 		f, ok := GetField(st, name, ignoreCase)
 		if ok && f.Exported() {
-			return &objectPropertyMappingValue{
-				base:              baseName,
-				exportedFieldName: f.Name(),
-				exportedFieldType: f.Type(),
-			}, true
+			ret.base = baseName
+			ret.exportedFieldName = f.Name()
+			ret.exportedFieldType = f.Type()
+			return ret, true
 		}
-	}
-
-	ret := &objectPropertyMappingValue{
-		base: base,
 	}
 
 	setter, ok := GetMethod(named, "Set"+name, ignoreCase)
 	if ok && setter.Exported() && GetParamsCount(setter) == 1 {
 		ret.setter = setter
 	}
-	getter, ok := GetMethod(named, name, ignoreCase)
-	if ok && getter.Exported() && GetParamsCount(getter) == 0 {
-		ret.getter = getter
-	}
+
 	if ret.CanGet() || ret.CanSet() {
 		return ret, true
 	}

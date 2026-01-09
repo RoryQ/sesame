@@ -120,5 +120,15 @@ mappings:
     fields:
       - a: Address.Pref
         b: Name
+  - name: ProductMapper
+    package: mapper
+    destination: ./mapper/product_mapper_gen.go
+    bidirectional: true
+    a:
+      package: ./model
+      name: ProductModel
+    b:
+      package: ./domain
+      name: Product
 _includes:
   - ./*/**/*_sesame.yml
